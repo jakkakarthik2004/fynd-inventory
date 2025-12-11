@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Building2, Settings, LogOut, Package, Moon, Sun, PackagePlus, Sparkles, Gift, ShieldAlert } from 'lucide-react';
+import { LayoutGrid, Building2, Settings, LogOut, Package, Moon, Sun, PackagePlus, Sparkles, Gift, ShieldAlert, Truck } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,7 @@ export default function Sidebar() {
     { name: t('predict_sales'), icon: Sparkles, path: '/predict-sales' },
     { name: t('smart_bundles'), icon: Gift, path: '/smart-bundles' },
     { name: t('safety_stock'), icon: ShieldAlert, path: '/safety-stock' },
+    { name: t('stock_transfers'), icon: Truck, path: '/stock-transfers' },
     { name: t('suppliers'), icon: Building2, path: '/suppliers' },
     // { name: 'Analytics', icon: BarChart3, path: '/analytics' }, // Future
   ];

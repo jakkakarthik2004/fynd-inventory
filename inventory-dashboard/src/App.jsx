@@ -7,8 +7,63 @@ import ManualOrder from './pages/ManualOrder';
 import PredictSales from './pages/PredictSales';
 import SmartBundles from './pages/SmartBundles';
 import SafetyStock from './pages/SafetyStock';
+import StockTransfers from './pages/StockTransfers';
 import Layout from './components/Layout';
 import { ThemeProvider } from './context/ThemeContext';
+
+// function App() {
+//   console.log('DEBUG: App component rendering');
+//   const [marketSignal, setMarketSignal] = useState('neutral');
+
+//   return (
+//     <ThemeProvider>
+//       <BrowserRouter>
+//         <Routes>
+//           <Route path="/" element={
+//               <Layout>
+//                   <Dashboard marketSignal={marketSignal} setMarketSignal={setMarketSignal} />
+//               </Layout>
+//           } />
+//           <Route path="/item/:itemId" element={
+//               <Layout>
+//                   <ItemDetails marketSignal={marketSignal} />
+//               </Layout>
+//           } />
+//           <Route path="/suppliers" element={
+//               <Layout>
+//                   <SupplierHub />
+//               </Layout>
+//           } />
+//           <Route path="/manual-order" element={
+//               <Layout>
+//                   <ManualOrder />
+//               </Layout>
+//           } />
+//           <Route path="/predict-sales" element={
+//               <Layout>
+//                   <PredictSales />
+//               </Layout>
+//           } />
+//           <Route path="/smart-bundles" element={
+//               <Layout>
+//                   <SmartBundles />
+//               </Layout>
+//           } />
+//           <Route path="/safety-stock" element={
+//               <Layout>
+//                   <SafetyStock />
+//               </Layout>
+//           } />
+//           <Route path="/stock-transfers" element={
+//               <Layout>
+//                   <StockTransfers />
+//               </Layout>
+//           } />
+//         </Routes>
+//       </BrowserRouter>
+//     </ThemeProvider>
+//   );
+// }
 
 function App() {
   const [marketSignal, setMarketSignal] = useState('neutral');
@@ -50,6 +105,11 @@ function App() {
           <Route path="/safety-stock" element={
               <Layout>
                   <SafetyStock />
+              </Layout>
+          } />
+          <Route path="/stock-transfers" element={
+              <Layout>
+                  <StockTransfers />
               </Layout>
           } />
         </Routes>

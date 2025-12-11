@@ -333,3 +333,46 @@ Respond ONLY in this JSON structure:
     throw error;
   }
 }
+
+export async function generateTransferStrategy(item, locations) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const prompt = `
+    Act as a Logistics AI.
+    Item: ${item.item_name}
+    Total Stock: ${item.quantity_in_stock}
+    Locations: ${JSON.stringify(locations)}
+
+    Analyze the distribution. If stock is unbalanced (e.g., one location has too much, another too little), recommend a transfer.
+    Rule: Warehouses usually hold more. Stores should be balanced suitable for demand.
+    
+    Respond ONLY in this JSON structure:
+    {
+        "status": "BALANCED" or "TRANSFER_NEEDED",
+        "from_location": "<name>",
+        "to_location": "<name>",
+        "quantity": <number>,
+        "reason": "<Short reason>"
+    }
+    `;
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(text);
+  } catch (error) {
+    // Fallback logic
+    const locs = Object.entries(locations);
+    const max = locs.reduce((a, b) => a[1] > b[1] ? a : b);
+    const min = locs.reduce((a, b) => a[1] < b[1] ? a : b);
+    
+    if (max[1] - min[1] > 20) {
+         return {
+             status: "TRANSFER_NEEDED",
+             from_location: max[0],
+             to_location: min[0],
+             quantity: Math.floor((max[1] - min[1]) / 2),
+             reason: "Balancing stock (Fallback)"
+         };
+    }
+    return { status: "BALANCED", reason: "Distribution looks okay (Fallback)" };
+  }
+}
