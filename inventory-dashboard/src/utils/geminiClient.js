@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini API
-const API_KEY = "AIzaSyDjv7-rq_SxzlHHGw-JvqdbcPpTJsXzAGk"; // In a real app, use import.meta.env.VITE_GEMINI_API_KEY
+const API_KEY = "AIzaSyBsQbWug6-12H_l1xngmW3XXo_gp6Dp0GQ"; // In a real app, use import.meta.env.VITE_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export async function generateOrderPlan(itemDetails, marketSignal = 'neutral') {
