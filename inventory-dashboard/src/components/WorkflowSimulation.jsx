@@ -7,12 +7,26 @@ const steps = [
   { id: 3, label: "Boltic AI Analysis & Optimization", icon: BrainCircuit },
 ];
 
-export default function WorkflowSimulation({ onComplete }) {
+export default function WorkflowSimulation({ onComplete, itemId }) {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
+    // Trigger Workflow APIs
+    const triggerWorkflow = async () => {
+        try {
+            await fetch('/api/boltic/trigger-workflow', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ triggerSource: 'InventoryDashboard', itemId })
+            });
+        } catch (e) {
+            console.error("Failed to trigger workflow", e);
+        }
+    };
+    triggerWorkflow();
+
     // Sequence of delays for each step to create a realistic "processing" feel
-    const delays = [4500, 9000, 4500];
+    const delays = [6500, 9000, 6500];
 
     let stepIndex = 0;
 

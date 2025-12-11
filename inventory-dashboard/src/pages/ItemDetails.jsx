@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Box, AlertTriangle, CheckCircle, Brain, Calendar, ShoppingCart, Zap, PackagePlus, History, Plus, Minus, Tag, TrendingUp, Megaphone, Share2, MapPin, Calculator, Info } from 'lucide-react';
-import { inventoryItems } from '../data/inventoryData';
 
-import { generateOrderPlan, generatePricingStrategy, generateMarketingCampaign, generateAdvancedForecast } from '../utils/geminiClient';
+
+// Gemini Client removed as per request
+// import { generateOrderPlan, generatePricingStrategy, generateMarketingCampaign, generateAdvancedForecast } from '../utils/geminiClient';
 import { shareToLinkedIn } from '../utils/linkedinClient';
 import { calculateSafetyStock, calculateROP, calculateTransfers } from '../utils/inventoryMath';
 import WorkflowSimulation from '../components/WorkflowSimulation';
@@ -15,7 +16,32 @@ export default function ItemDetails({ marketSignal }) {
   const { itemId } = useParams();
   const navigate = useNavigate();
 
-  const item = inventoryItems.find(i => i.id === parseInt(itemId));
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [item, setItem] = useState(null);
+  
+  useEffect(() => {
+    async function fetchData() {
+       try {
+         const response = await fetch('/api/boltic/new-table');
+         const json = await response.json();
+         if (json.success && Array.isArray(json.data)) {
+             const mappedData = json.data.map((item, index) => ({
+                  id: item.Id || item.id || `boltic-${index}`,
+                  item_name: item.Item_name || item.product_name || item.item_name || "Unknown Item",
+                  supplier: item.Item_supplier || item.item_supplier || item.supplier || "Boltic Supplier",
+                  quantity_in_stock: Number(item.Quantity_In_Stock) || Number(item.quantity_in_stock) || 0,
+                  reorder_threshold: Number(item.Reorder_Threshold) || Number(item.reorder_threshold) || 10,
+                  reorder_status: item.Reorder_Status || item.reorder_status || "OK",
+                  price: Number(item.price) || 0,
+                  locations: item.locations || []
+             }));
+             const found = mappedData.find(i => String(i.id) === String(itemId) || i.id === parseInt(itemId));
+             setItem(found);
+         }
+       } catch (e) { console.error(e); }
+    }
+    fetchData();
+  }, [itemId]);
   
   const [viewState, setViewState] = useState('IDLE'); // IDLE, SIMULATING, SHOW_RESULT
   const [orderPlan, setOrderPlan] = useState(null);
@@ -116,39 +142,61 @@ export default function ItemDetails({ marketSignal }) {
     setError(null);
     setOrderPlan(null);
     
-    // Parallel Execution: Run base plan AND advanced forecast
-    const planPromise = generateOrderPlan(item, marketSignal);
-    const forecastPromise = generateAdvancedForecast(item, [marketSignal], ropConfig.serviceLevel);
+    // NOTE: The WorkflowSimulation component handles the visual simulation.
+    // The actual triggering of the Boltic workflow happens inside WorkflowSimulation (on mount).
     
-    try {
-        const [plan, forecast] = await Promise.all([planPromise, forecastPromise]);
-        
-        // Merge forecast data into the plan
-        const fullPlan = {
-            ...plan,
-            forecast_data: forecast.forecast || [], // Override with advanced forecast
-            anomaly_detection: forecast.anomaly // Store for UI
-        };
-
-        setOrderPlan(fullPlan);
-    } catch (err) {
-        console.error(err);
-        setError("Failed to generate intelligence. Please try again.");
-        setViewState('IDLE');
-    }
+    // We wait for the "simulation" to finish (via callback) before fetching the result.
   };
 
-  const handleSimulationComplete = () => {
-      if (orderPlan) {
-          setViewState('SHOW_RESULT');
-      } else if (!error) {
-          setViewState('SHOW_RESULT');
-      }
+  const handleSimulationComplete = async () => {
+      // Simulation UI finished. Now we wait 10 seconds as requested, then fetch data.
+      setTimeout(async () => {
+           try {
+               const response = await fetch('/api/boltic/response-latest');
+               const json = await response.json();
+               
+               if (json.success && json.data) {
+                   const data = json.data;
+                   
+                   // Map the response format (from user's JSON) to our UI state
+                   setOrderPlan({
+                       recommended_quantity: data.recommended_quantity || 0,
+                       reorder_by_date: data.reorder_by_date,
+                       stockout_prediction: data.stockout_prediction,
+                       reason: data.executive_summary, // Map executive_summary to reason
+                       // We can store other fields if needed
+                       actionable_insights: data.actionable_insights,
+                       forecast_data: data.forecast_data || [],
+                       location_distribution: data.location_distribution
+                   });
+                   setViewState('SHOW_RESULT');
+               } else {
+                   throw new Error(json.message || "No data received");
+               }
+           } catch (e) {
+               console.error("Fetch response failed", e);
+               setError("Failed to fetch workflow results. Please try again.");
+               setViewState('IDLE');
+           }
+      }, 10000); // 10s delay
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!orderPlan) return;
     
+    // 1. Update status in Boltic
+    try {
+        await fetch('/api/boltic/update-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId: item.id, status: "OK" })
+        });
+        console.log("Updated Boltic status to OK");
+    } catch (e) {
+        console.error("Failed to update status", e);
+    }
+
+    // 2. Save local order (Demo logic)
     saveOrder({
       item_name: item.item_name,
       supplier: item.supplier,
@@ -157,8 +205,7 @@ export default function ItemDetails({ marketSignal }) {
       reason: orderPlan.reason
     });
 
-    // Navigate to dashboard with "placed orders" view active (passed via state or handled by dashboard)
-    // For now, let's just go back to dashboard and user can switch view.
+    // Navigate to dashboard 
     navigate('/');
   };
 
@@ -170,7 +217,7 @@ export default function ItemDetails({ marketSignal }) {
 
   return (
     <div className="py-8">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         
         <Link to="/" className="mb-6 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -188,10 +235,10 @@ export default function ItemDetails({ marketSignal }) {
           </span>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-8 lg:grid-cols-2">
           
           {/* Main Details */}
-          <div className="lg:col-span-2">
+          <div>
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800">
                 <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Item Overview</h2>
                 <div className="grid gap-6 sm:grid-cols-2">
@@ -442,7 +489,7 @@ export default function ItemDetails({ marketSignal }) {
             </div>
 
           {/* AI Side Panel */}
-          <div className="lg:col-span-1">
+          <div>
              <div className="sticky top-8 rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/50 p-6 shadow-sm ring-1 ring-indigo-50 dark:bg-slate-900 dark:from-slate-900 dark:to-slate-800 dark:border-slate-700 dark:ring-0">
                 <div className="mb-4 flex items-center gap-2">
                     <Zap className="h-6 w-6 text-indigo-600 fill-indigo-100 dark:text-indigo-400 dark:fill-indigo-900" />
@@ -465,7 +512,7 @@ export default function ItemDetails({ marketSignal }) {
                 )}
 
                 {viewState === 'SIMULATING' && (
-                    <WorkflowSimulation onComplete={handleSimulationComplete} />
+                    <WorkflowSimulation itemId={item?.id || itemId} onComplete={handleSimulationComplete} />
                 )}
 
                 {error && viewState === 'IDLE' && (

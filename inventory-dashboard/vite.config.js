@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/linkedin': {
-        target: 'https://api.linkedin.com/v2',
+      '/api': {
+        target: 'http://localhost:5000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/linkedin/, ''),
-      },
+        secure: false,
+      }
     }
   }
 })

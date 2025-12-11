@@ -4,7 +4,7 @@ import KPICards from '../components/KPICards';
 import AnalyticsCharts from '../components/AnalyticsCharts';
 import Filters from '../components/Filters';
 import InventoryTable from '../components/InventoryTable';
-import { inventoryItems } from '../data/inventoryData';
+// import { inventoryItems } from '../data/inventoryData'; // Removed static data
 import { getOrders } from '../utils/orderStorage';
 import { exportToCSV } from '../utils/exportUtils';
 import ChannelSyncWidget from '../components/ChannelSyncWidget';
@@ -28,10 +28,44 @@ export default function Dashboard({ marketSignal, setMarketSignal }) {
     }
   }, [viewMode]);
 
+  // Fetch Data from Boltic
+  const [bolticData, setBolticData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch('/api/boltic/new-table');
+        const json = await response.json();
+        
+        if (json.success && Array.isArray(json.data)) {
+           console.log("Fetched Data from Backend:", json.data);
+           setBolticData(json.data);
+        } else {
+           console.error("Failed to fetch Boltic data:", json);
+           setError("Failed to load inventory data");
+        }
+      } catch (err) {
+        console.error("API Fetch Error:", err);
+        setError("Error connecting to backend");
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    // Only fetch if in Inventory view
+    if (viewMode === 'INVENTORY') {
+         fetchData();
+    }
+  }, [viewMode]);
+
+
   // Get unique suppliers for the dropdown
   const suppliers = useMemo(() => {
-    return [...new Set(inventoryItems.map(item => item.supplier))].sort();
-  }, []);
+    // USE bolticData instead of inventoryItems
+    return [...new Set(bolticData.map(item => item.supplier))].sort();
+  }, [bolticData]);
 
   // Filter and Sort Data
   const displayedData = useMemo(() => {
@@ -43,7 +77,7 @@ export default function Dashboard({ marketSignal, setMarketSignal }) {
     }
 
     // Inventory Logic
-    let data = [...inventoryItems];
+    let data = [...bolticData];
 
     // 1. Filter
     if (searchQuery) {
@@ -79,7 +113,7 @@ export default function Dashboard({ marketSignal, setMarketSignal }) {
     }
 
     return data;
-  }, [searchQuery, statusFilter, supplierFilter, sortConfig, viewMode, orders]);
+  }, [searchQuery, statusFilter, supplierFilter, sortConfig, viewMode, orders, bolticData]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -89,15 +123,15 @@ export default function Dashboard({ marketSignal, setMarketSignal }) {
     setSortConfig({ key, direction });
   };
 
-  const alerts = useMemo(() => {
-     return inventoryItems
+    const alerts = useMemo(() => {
+     return bolticData
         .filter(i => i.reorder_status === 'REORDER')
         .map(i => ({
             title: 'Low Stock Alert',
             message: `${i.item_name} is below threshold (${i.quantity_in_stock} left).`,
             time: 'Just now'
         }));
-  }, []);
+  }, [bolticData]);
 
   return (
     <div className="pb-20 pt-8">
@@ -107,8 +141,23 @@ export default function Dashboard({ marketSignal, setMarketSignal }) {
             <MarketPulseWidget currentSignal={marketSignal} onSignalChange={setMarketSignal} />
             <NotificationCenter notifications={alerts} />
         </DashboardHeader>
+
+        {loading && (
+            <div className="flex justify-center py-10">
+                <div className="text-xl text-gray-500 animate-pulse">Loading Inventory Data...</div>
+            </div>
+        )}
+
+        {error && (
+            <div className="bg-red-50 p-4 border border-red-200 rounded-md text-red-600 mb-6">
+                Error: {error}
+            </div>
+        )}
+
+        {!loading && !error && (
+            <>
         
-        <KPICards data={inventoryItems} />
+        <KPICards data={bolticData} />
 
         <Filters 
           searchQuery={searchQuery}
@@ -135,9 +184,11 @@ export default function Dashboard({ marketSignal, setMarketSignal }) {
         </div>
 
         {viewMode === 'INVENTORY' && (
-            <AnalyticsCharts inventoryData={inventoryItems} />
+            <AnalyticsCharts inventoryData={bolticData} />
         )}
-        
+
+      </>
+        )}
       </div>
     </div>
   );

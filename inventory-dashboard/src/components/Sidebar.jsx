@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Building2, Settings, LogOut, Package, Moon, Sun } from 'lucide-react';
+import { LayoutGrid, Building2, Settings, LogOut, Package, Moon, Sun, PackagePlus, Sparkles, Gift, ShieldAlert } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
@@ -9,6 +9,10 @@ export default function Sidebar() {
   const { t, i18n } = useTranslation();
   const navItems = [
     { name: t('dashboard'), icon: LayoutGrid, path: '/' },
+    { name: t('manual_order'), icon: PackagePlus, path: '/manual-order' },
+    { name: t('predict_sales'), icon: Sparkles, path: '/predict-sales' },
+    { name: t('smart_bundles'), icon: Gift, path: '/smart-bundles' },
+    { name: t('safety_stock'), icon: ShieldAlert, path: '/safety-stock' },
     { name: t('suppliers'), icon: Building2, path: '/suppliers' },
     // { name: 'Analytics', icon: BarChart3, path: '/analytics' }, // Future
   ];
@@ -20,7 +24,7 @@ export default function Sidebar() {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-indigo-200 dark:shadow-none shadow-md">
           <Package className="h-6 w-6" />
         </div>
-        <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Boltic</span>
+        <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Boltic Inventory Manager</span>
       </div>
 
       {/* Nav */}

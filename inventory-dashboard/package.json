@@ -10,16 +10,26 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@boltic/sdk": "^0.0.7",
+    "@gofynd/fdk-extension-javascript": "^1.1.5-beta.1",
     "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.2",
+    "body-parser": "^2.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "i18next": "^25.7.2",
     "lucide-react": "^0.556.0",
+    "mongoose": "^9.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^16.4.0",
     "react-router-dom": "^7.10.1",
     "recharts": "^3.5.1",
+    "serve-static": "^2.2.0",
+    "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

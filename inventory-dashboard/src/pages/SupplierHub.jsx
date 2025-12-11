@@ -1,23 +1,49 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Building2, Phone, Mail, MapPin } from 'lucide-react';
-import { inventoryItems } from '../data/inventoryData';
+
 import SupplierScorecard from '../components/SupplierScorecard';
 
 export default function SupplierHub() {
+  const [inventoryItems, setInventoryItems] = React.useState([]);
+
+  React.useEffect(() => {
+    async function fetchData() {
+       try {
+         const response = await fetch('/api/boltic/new-table');
+         const json = await response.json();
+         if (json.success && Array.isArray(json.data)) {
+           // Map logic same as Dashboard
+           const mappedData = json.data.map((item, index) => ({
+                  id: item.Id || item.id || `boltic-${index}`,
+                  item_name: item.Item_name || item.product_name || item.item_name || "Unknown Item",
+                  supplier: item.Item_supplier || item.item_supplier || item.supplier || "Boltic Supplier",
+                  quantity_in_stock: Number(item.Quantity_In_Stock) || Number(item.quantity_in_stock) || 0,
+                  reorder_threshold: Number(item.Reorder_Threshold) || Number(item.reorder_threshold) || 10,
+                  reorder_status: item.Reorder_Status || item.reorder_status || "OK",
+                  price: Number(item.price) || 0,
+                  locations: item.locations || []
+           }));
+           setInventoryItems(mappedData);
+         }
+       } catch (e) { console.error("Failed to fetch suppliers", e); }
+    }
+    fetchData();
+  }, []);
+
   // Aggregate data by supplier
   const suppliersData = inventoryItems.reduce((acc, item) => {
-     if (!acc[item.supplier]) {
-         acc[item.supplier] = { 
-             name: item.supplier, 
-             items: 0, 
-             totalStock: 0,
-             contact: `contact@${item.supplier.toLowerCase()}.com` // Fake data
-         };
-     }
-     acc[item.supplier].items += 1;
-     acc[item.supplier].totalStock += item.quantity_in_stock;
-     return acc;
+    if (!acc[item.supplier]) {
+        acc[item.supplier] = { 
+            name: item.supplier, 
+            items: 0, 
+            totalStock: 0,
+            contact: `contact@${item.supplier.toLowerCase().replace(/\s+/g,'')}.com`
+        };
+    }
+    acc[item.supplier].items += 1;
+    acc[item.supplier].totalStock += item.quantity_in_stock;
+    return acc;
   }, {});
   
   const suppliers = Object.values(suppliersData);
