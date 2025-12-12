@@ -3,7 +3,7 @@ const axios = require('axios');
 async function verifyLatest() {
     console.log("Fetching /api/boltic/response-latest...");
     try {
-        const r = await axios.get("http://localhost:5000/api/boltic/response-latest");
+        const r = await axios.get("http://13.222.15.163:5000/api/boltic/response-latest");
         console.log("Status:", r.status);
         if (r.data.success) {
             console.log("SUCCESS. Data keys:", Object.keys(r.data.data));

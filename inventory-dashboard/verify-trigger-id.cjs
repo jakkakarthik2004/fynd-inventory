@@ -4,7 +4,7 @@ async function testTrigger() {
     console.log("Mocking Frontend Request with specific Item ID...");
     const testId = "frontend-selected-id-" + Date.now();
     try {
-        const r = await axios.post("http://localhost:5000/api/boltic/trigger-workflow", {
+        const r = await axios.post("http://13.222.15.163:5000/api/boltic/trigger-workflow", {
             triggerSource: "TestScript",
             itemId: testId
         });

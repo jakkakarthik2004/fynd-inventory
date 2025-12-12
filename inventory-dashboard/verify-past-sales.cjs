@@ -2,7 +2,7 @@ const axios = require('axios');
 async function verifyPastSales() {
     console.log("Fetching /api/boltic/past-sales...");
     try {
-        const r = await axios.get("http://localhost:5000/api/boltic/past-sales");
+        const r = await axios.get("http://13.222.15.163:5000/api/boltic/past-sales");
         console.log("Status:", r.status);
         if (r.data.success) {
             console.log("Success. Record count from past_data:", r.data.data.length);
