@@ -8,7 +8,16 @@ const serveStatic = require("serve-static");
 const { readFileSync } = require('fs');
 const { setupFdk } = require("@gofynd/fdk-extension-javascript/express");
 const { SQLiteStorage } = require("@gofynd/fdk-extension-javascript/express/storage");
-const sqliteInstance = new sqlite3.Database('session_storage.db');
+const sqliteInstance = (() => {
+    try {
+        return new sqlite3.Database('session_storage.db', (err) => {
+            if (err) console.warn("Failed to open local DB, falling back to memory");
+        });
+    } catch (e) {
+        console.warn("SQLite file access failed, using in-memory DB.");
+        return new sqlite3.Database(':memory:');
+    }
+})();
 const mongoose = require('mongoose');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@boltic/sdk");
@@ -220,8 +229,10 @@ const platformApiRoutes = fdkExtension.platformApiRoutes;
 app.use('/api', platformApiRoutes);
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Backend running on http://localhost:${PORT}`);
+    });
+}
 
 module.exports = app;
